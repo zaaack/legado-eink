@@ -1,0 +1,85 @@
+ body {
+   margin: 0;
+   padding: 0;
+   font-size: 20px;
+ }
+
+ .books {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  li {
+    padding: 10px;
+    font-size: 25px;
+    border-bottom: 1px solid #aaa;
+  }
+ }
+
+ @mixin if-dark {
+   @at-root html[data-theme="dark"] & {
+     @content;
+   }
+ }
+
+ #reader {
+   padding: 10px;
+   padding-bottom: 50px;
+   padding-top: 30px;
+   .header {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    color: #999;
+    background-color: #fff;
+    @include if-dark {
+      color: #ccc;
+      background-color: #000;
+    }
+   }
+
+   @include if-dark {
+     background-color: #000;
+     color: #fff;
+   }
+
+   .title {
+     font-size: 30px;
+     font-weight: bold;
+   }
+
+   .content {
+     font-size: 24px;
+     white-space: pre-line;
+   }
+
+   .buttons {
+     height: 40px;
+     line-height: 40px;
+     width: 100%;
+     position: fixed;
+     bottom: 0;
+     left: 0;
+     background-color: #fff;
+
+     @include if-dark() {
+       background-color: #000;
+     }
+
+     overflow: hidden;
+
+     div {
+       width: 33%;
+       float: left;
+       text-align: center;
+       border: 1px solid #000;
+
+       @include if-dark {
+         border-color: #fff;
+       }
+     }
+   }
+ }
