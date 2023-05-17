@@ -4,11 +4,10 @@ import { Chapter, ChaptersRes } from "./types/chapters";
 import { ChapterContent } from "./types/chapter";
 import "./index.scss";
 
-const base = "http://192.168.31.246:1122";
-
+let base = localStorage.baseUrl || "http://192.168.31.246:1122";
 function init() {
   function setBase() {
-    localStorage.base = window.prompt("设置服务地址");
+    localStorage.baseUrl = base = window.prompt("设置服务地址", base) || base;
     init();
   }
   const renderTheme = () => {
@@ -17,9 +16,10 @@ function init() {
   if (!localStorage.theme) {
     localStorage.theme = "dark";
   }
+  $("html").attr("data-theme", localStorage.theme);
   $.getJSON(`${base}/getBookshelf`)
     .then((data: Shelf) => {
-      $(`<div>
+      $(`<div class="home">
     <ul class="books">
     ${data.data
       .map((b, i) => {
@@ -43,9 +43,9 @@ function init() {
           } else {
             localStorage.theme = "dark";
           }
-          $(e.target).html(renderTheme());
-          $("html").data("theme", localStorage.theme);
-        });
+            $(e.target).html(renderTheme());
+          $("html").attr("data-theme", localStorage.theme);
+      });
     })
     .fail((er) => {
       console.error(er);
@@ -54,13 +54,45 @@ function init() {
         .on("click", setBase);
     });
   document.addEventListener("keydown", (e) => {
-    if (["AudioVolumeDown", "ArrowRight", "ArrowDown"].indexOf(e.key) >= 0) {
+    if ([25, 39, 40].indexOf(e.keyCode) >= 0) {
       $(".next").trigger("click");
-    } else if (["AudioVolumeUp", "ArrowLeft", "ArrowUp"].indexOf(e.key) >= 0) {
+      $('#reader').addClass('.hideButtons')
+      e.preventDefault();
+    } else if ([24, 37, 38].indexOf(e.keyCode) >= 0) {
       $(".prev").trigger("click");
+      e.preventDefault();
+      $('#reader').addClass('.hideButtons')
     }
   });
 }
+
+let cached = {} as any;
+let cachedKeys = [] as string[];
+function getBookContent({ url, index }: { url: string; index: number }) {
+  if (cachedKeys.length > 6) {
+    let shift = cachedKeys.shift()!;
+    delete cached[shift];
+  }
+  const key = (index: number) => url + "|" + index;
+  // 自动获取下一章
+  $.getJSON(`${base}/getBookContent`, { url, index: index + 1 }).then(
+    (data) => {
+      cached[key(index + 1)] = data;
+      cachedKeys.push(key(index + 1));
+    }
+  );
+  if (key(index) in cached) {
+    return $.Deferred()
+      .resolve(cached[key(index)])
+      .then((d) => d);
+  }
+  return $.getJSON(`${base}/getBookContent`, { url, index }).then((data) => {
+    cached[key(index)] = data;
+    cachedKeys.push(key(index));
+    return data;
+  });
+}
+
 let curChapterIndex = 0;
 let isOpening = false;
 function openChapter(
@@ -72,55 +104,59 @@ function openChapter(
   if (isOpening) return;
   isOpening = true;
   curChapterIndex = chapterIndex;
-  return $.when(
-    $.getJSON(`${base}/getBookContent`, {
-      url: book.bookUrl,
-      index: chapterIndex,
+  let ci = chapters[chapterIndex];
+  $(".header").html(ci.title);
+  return getBookContent({
+    url: book.bookUrl,
+    index: chapterIndex,
+  })
+    .then((data: ChapterContent) => {
+      $("#reader .title").text(ci.title);
+      $("#reader .content").text(data.data);
+      if (type === "prev") {
+        window.scrollTo(0, document.body.scrollHeight);
+      } else {
+        window.scrollTo(0, 0);
+      }
+      return $.ajax({
+        url: `${base}/saveBookProgress`,
+        method: "POST",
+        data: JSON.stringify({
+          author: book.author,
+          durChapterIndex: chapterIndex,
+          durChapterPos: type === "prev" ? data.data.length : 0,
+          durChapterTime: 1684307625485,
+          durChapterTitle: ci.title,
+          name: book.name,
+        }),
+        dataType: "json",
+        contentType: "application/json",
+      });
     })
-      .then((data: ChapterContent) => {
-        $("#reader .title").text(chapters[chapterIndex].title);
-        $("#reader .content").text(data.data);
-        if (type === "prev") {
-          window.scrollTo(0, document.body.scrollHeight);
-        } else {
-          window.scrollTo(0, 0);
-        }
-        return $.ajax({
-          url: `${base}/saveBookProgress`,
-          data: JSON.stringify({
-            author: book.author,
-            durChapterIndex: chapterIndex,
-            durChapterPos: type === "prev" ? data.data.length : 0,
-            durChapterTime: 1684307625485,
-            durChapterTitle: chapters[chapterIndex].title,
-            name: book.name,
-          }),
-          method: "post",
-          dataType: "json",
-          contentType: "application/json",
-        });
-      })
-      .always(() => {
-        isOpening = false;
-      })
-  );
+    .always(() => {
+      isOpening = false;
+    });
 }
-
 function openBook(book: Book) {
-  const PageHeight = window.innerHeight - 50 - 30 - 30;
+  if (isOpening) return;
+  isOpening = true;
+  const getPageHeight = () => window.innerHeight - 50 - 30 - 30;
 
   $.when(
     $.getJSON(`${base}/getChapterList`, {
       url: book.bookUrl,
-    }),
-    $.getJSON(`${base}/getBookContent`, {
+    }).then((d) => d),
+    getBookContent({
       url: book.bookUrl,
       index: book.durChapterIndex,
     })
-  ).then(([chapters]: [ChaptersRes], [chapter]: [ChapterContent]) => {
-    curChapterIndex = book.durChapterIndex;
-    let ci = chapters.data[curChapterIndex];
-    $(`<div id="reader">
+  )
+    .then((chapters: ChaptersRes, chapter: ChapterContent) => {
+      curChapterIndex = book.durChapterIndex;
+      (window as any)['nextChapter'] = () => openChapter(book, chapters.data, curChapterIndex + 1, "next");
+      (window as any)['prevChapter'] = () => openChapter(book, chapters.data, curChapterIndex - 1, "prev")
+      let ci = chapters.data[curChapterIndex];
+      $(`<div id="reader" class="hideButtons">
       <div class="header">${ci.title}</div>
       <div class="title">${ci.title}</div>
       <div class="content">${chapter.data}</div>
@@ -130,32 +166,44 @@ function openBook(book: Book) {
         <div class="next"=>下一页</div>
       </div>
     </div>`)
-      .appendTo($("#root").html(""))
-      .on("click", ".prev", (e) => {
-        if (window.scrollY <= 1) {
-          if (curChapterIndex - 1 < 0) {
-            alert("已经是第一章了");
+        .appendTo($("#root").html(""))
+        .on('click', '.content', e => {
+          $('#reader').removeClass('.hideButtons')
+        })
+        .on("click", ".prev", (e) => {
+          if (window.scrollY <= 1) {
+            if (curChapterIndex - 1 < 0) {
+              alert("已经是第一章了");
+            } else {
+              openChapter(book, chapters.data, curChapterIndex - 1, "prev");
+            }
           } else {
-            openChapter(book, chapters.data, curChapterIndex - 1, "prev");
+            window.scrollBy(0, -getPageHeight()/2);
+            window.scrollBy(0, -getPageHeight()/2);
           }
-        } else {
-          window.scrollBy(0, -PageHeight);
-        }
-      })
-      .on("click", ".next", (e) => {
-        if (
-          window.scrollY >=
-          document.body.scrollHeight - window.innerHeight - 1
-        ) {
-          if (curChapterIndex + 1 >= book.totalChapterNum) {
-            alert("已经是最后一章了");
+        })
+        .on("click", ".next", (e) => {
+          if (
+            window.scrollY >=
+            document.body.scrollHeight - window.innerHeight - 1
+          ) {
+            if (curChapterIndex + 1 >= book.totalChapterNum) {
+              alert("已经是最后一章了");
+            } else {
+              openChapter(book, chapters.data, curChapterIndex + 1, "next");
+            }
           } else {
-            openChapter(book, chapters.data, curChapterIndex + 1, "next");
+            window.scrollBy(0, getPageHeight()/2);
+            window.scrollBy(0, getPageHeight()/2);
           }
-        } else {
-          window.scrollBy(0, PageHeight);
-        }
-      });
-  });
+        });
+    })
+    .always(() => {
+      isOpening = false;
+    });
 }
-init();
+try {
+  init();
+} catch (error: any) {
+  document.getElementById("#root")!.innerHTML = error.message;
+}

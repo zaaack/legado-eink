@@ -39,12 +39,17 @@ export default defineConfig({
     template: 'src/template.html',
     target: 'index.html',
   }),
+  htmlTemplate({
+    template: 'src/template-debug.html',
+    target: 'debug.html',
+  }),
   externalGlobals({
     jquery: "$"
   }),
   replace({
     'preventAssignment': true,
-    'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development')
+    'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
+    "use strict": '', // for android 4.2
   }),
   resolve({ browser: true, }), // tells Rollup how to find date-fns in node_modules
   commonjs({

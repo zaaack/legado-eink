@@ -1,9 +1,15 @@
+ html {
+  transform: translateZ(0);
+ }
+
  body {
    margin: 0;
    padding: 0;
    font-size: 20px;
  }
-
+.home {
+  padding: 20px 0;
+}
  .books {
   list-style: none;
   padding: 0;
@@ -25,6 +31,13 @@
    padding: 10px;
    padding-bottom: 50px;
    padding-top: 30px;
+
+   &.hideButtons {
+    padding-bottom: 10px;
+    .buttons {
+      display: none;
+    }
+   }
    .header {
     position: fixed;
     left: 0;
@@ -47,13 +60,14 @@
    }
 
    .title {
-     font-size: 30px;
+     font-size: 40px;
      font-weight: bold;
    }
 
    .content {
-     font-size: 24px;
+     font-size: 35px;
      white-space: pre-line;
+     line-height: 1.5;
    }
 
    .buttons {
