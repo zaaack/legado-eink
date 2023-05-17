@@ -56,12 +56,12 @@ function init() {
   document.addEventListener("keydown", (e) => {
     if ([25, 39, 40].indexOf(e.keyCode) >= 0) {
       $(".next").trigger("click");
-      $('#reader').addClass('.hideButtons')
+      $('#reader').addClass('hideButtons')
       e.preventDefault();
     } else if ([24, 37, 38].indexOf(e.keyCode) >= 0) {
       $(".prev").trigger("click");
       e.preventDefault();
-      $('#reader').addClass('.hideButtons')
+      $('#reader').addClass('hideButtons')
     }
   });
 }
@@ -140,7 +140,7 @@ function openChapter(
 function openBook(book: Book) {
   if (isOpening) return;
   isOpening = true;
-  const getPageHeight = () => window.innerHeight - 50 - 30 - 30;
+  const getPageHeight = () => window.innerHeight - 30 - 15;
 
   $.when(
     $.getJSON(`${base}/getChapterList`, {
@@ -156,7 +156,7 @@ function openBook(book: Book) {
       (window as any)['nextChapter'] = () => openChapter(book, chapters.data, curChapterIndex + 1, "next");
       (window as any)['prevChapter'] = () => openChapter(book, chapters.data, curChapterIndex - 1, "prev")
       let ci = chapters.data[curChapterIndex];
-      $(`<div id="reader" class="hideButtons">
+      $(`<div id="reader">
       <div class="header">${ci.title}</div>
       <div class="title">${ci.title}</div>
       <div class="content">${chapter.data}</div>
@@ -168,7 +168,7 @@ function openBook(book: Book) {
     </div>`)
         .appendTo($("#root").html(""))
         .on('click', '.content', e => {
-          $('#reader').removeClass('.hideButtons')
+          $('#reader').removeClass('hideButtons')
         })
         .on("click", ".prev", (e) => {
           if (window.scrollY <= 1) {
@@ -178,8 +178,8 @@ function openBook(book: Book) {
               openChapter(book, chapters.data, curChapterIndex - 1, "prev");
             }
           } else {
-            window.scrollBy(0, -getPageHeight()/2);
-            window.scrollBy(0, -getPageHeight()/2);
+            // 翻页在4.2系统浏览器会闪烁，换老版本chrome30或者uc就不会
+            window.scrollBy(0, -getPageHeight());
           }
         })
         .on("click", ".next", (e) => {
@@ -193,8 +193,7 @@ function openBook(book: Book) {
               openChapter(book, chapters.data, curChapterIndex + 1, "next");
             }
           } else {
-            window.scrollBy(0, getPageHeight()/2);
-            window.scrollBy(0, getPageHeight()/2);
+            window.scrollBy(0, getPageHeight());
           }
         });
     })

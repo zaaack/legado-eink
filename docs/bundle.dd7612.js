@@ -14,7 +14,7 @@
       return css;
   }
 
-  ___$insertStyle("html {\n  transform: translateZ(0);\n}\n\nbody {\n  margin: 0;\n  padding: 0;\n  font-size: 20px;\n}\n\n.home {\n  padding: 20px 0;\n}\n\n.books {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n}\n.books li {\n  padding: 10px;\n  font-size: 25px;\n  border-bottom: 1px solid #aaa;\n}\n\n#reader {\n  padding: 10px;\n  padding-bottom: 50px;\n  padding-top: 30px;\n}\n#reader.hideButtons {\n  padding-bottom: 10px;\n}\n#reader.hideButtons .buttons {\n  display: none;\n}\n#reader .header {\n  position: fixed;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 30px;\n  line-height: 30px;\n  font-size: 14px;\n  color: #999;\n  background-color: #fff;\n}\nhtml[data-theme=dark] #reader .header {\n  color: #ccc;\n  background-color: #000;\n}\n\nhtml[data-theme=dark] #reader {\n  background-color: #000;\n  color: #fff;\n}\n\n#reader .title {\n  font-size: 40px;\n  font-weight: bold;\n}\n#reader .content {\n  font-size: 35px;\n  white-space: pre-line;\n  line-height: 1.5;\n}\n#reader .buttons {\n  height: 40px;\n  line-height: 40px;\n  width: 100%;\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  background-color: #fff;\n  overflow: hidden;\n}\nhtml[data-theme=dark] #reader .buttons {\n  background-color: #000;\n}\n\n#reader .buttons div {\n  width: 33%;\n  float: left;\n  text-align: center;\n  border: 1px solid #000;\n}\nhtml[data-theme=dark] #reader .buttons div {\n  border-color: #fff;\n}");
+  ___$insertStyle("body {\n  margin: 0;\n  padding: 0;\n  font-size: 20px;\n}\n\n.home {\n  padding: 20px 0;\n}\n\n.books {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n}\n.books li {\n  padding: 10px;\n  font-size: 25px;\n  border-bottom: 1px solid #aaa;\n}\n\n#reader {\n  padding: 10px;\n  padding-bottom: 50px;\n  padding-top: 30px;\n}\n#reader.hideButtons {\n  padding-bottom: 10px;\n}\n#reader.hideButtons .buttons {\n  display: none;\n}\n#reader .header {\n  position: fixed;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 30px;\n  line-height: 30px;\n  font-size: 14px;\n  color: #999;\n  background-color: #fff;\n}\nhtml[data-theme=dark] #reader .header {\n  color: #ccc;\n  background-color: #000;\n}\n\nhtml[data-theme=dark] #reader {\n  background-color: #000;\n  color: #fff;\n}\n\n#reader .title {\n  font-size: 40px;\n  font-weight: bold;\n}\n#reader .content {\n  font-size: 35px;\n  white-space: pre-line;\n  line-height: 1.5;\n}\n#reader .buttons {\n  height: 40px;\n  line-height: 40px;\n  width: 100%;\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  background-color: #fff;\n  overflow: hidden;\n}\nhtml[data-theme=dark] #reader .buttons {\n  background-color: #000;\n}\n\n#reader .buttons div {\n  width: 33%;\n  float: left;\n  text-align: center;\n  border: 1px solid #000;\n}\nhtml[data-theme=dark] #reader .buttons div {\n  border-color: #fff;\n}");
 
   var base = localStorage.baseUrl || "http://192.168.31.246:1122";
   function init() {
@@ -63,13 +63,13 @@
       document.addEventListener("keydown", function (e) {
           if ([25, 39, 40].indexOf(e.keyCode) >= 0) {
               $(".next").trigger("click");
-              $('#reader').addClass('.hideButtons');
+              $('#reader').addClass('hideButtons');
               e.preventDefault();
           }
           else if ([24, 37, 38].indexOf(e.keyCode) >= 0) {
               $(".prev").trigger("click");
               e.preventDefault();
-              $('#reader').addClass('.hideButtons');
+              $('#reader').addClass('hideButtons');
           }
       });
   }
@@ -143,7 +143,7 @@
       if (isOpening)
           return;
       isOpening = true;
-      var getPageHeight = function () { return window.innerHeight - 50 - 30 - 30; };
+      var getPageHeight = function () { return window.innerHeight - 30 - 15; };
       $.when($.getJSON("".concat(base, "/getChapterList"), {
           url: book.bookUrl
       }).then(function (d) { return d; }), getBookContent({
@@ -155,10 +155,10 @@
           window['nextChapter'] = function () { return openChapter(book, chapters.data, curChapterIndex + 1, "next"); };
           window['prevChapter'] = function () { return openChapter(book, chapters.data, curChapterIndex - 1, "prev"); };
           var ci = chapters.data[curChapterIndex];
-          $("<div id=\"reader\" class=\"hideButtons\">\n      <div class=\"header\">".concat(ci.title, "</div>\n      <div class=\"title\">").concat(ci.title, "</div>\n      <div class=\"content\">").concat(chapter.data, "</div>\n      <div class=\"buttons\">\n        <div class=\"prev\">\u4E0A\u4E00\u9875</div>\n        <div class=\"cat\">\u76EE\u5F55</div>\n        <div class=\"next\"=>\u4E0B\u4E00\u9875</div>\n      </div>\n    </div>"))
+          $("<div id=\"reader\">\n      <div class=\"header\">".concat(ci.title, "</div>\n      <div class=\"title\">").concat(ci.title, "</div>\n      <div class=\"content\">").concat(chapter.data, "</div>\n      <div class=\"buttons\">\n        <div class=\"prev\">\u4E0A\u4E00\u9875</div>\n        <div class=\"cat\">\u76EE\u5F55</div>\n        <div class=\"next\"=>\u4E0B\u4E00\u9875</div>\n      </div>\n    </div>"))
               .appendTo($("#root").html(""))
               .on('click', '.content', function (e) {
-              $('#reader').removeClass('.hideButtons');
+              $('#reader').removeClass('hideButtons');
           })
               .on("click", ".prev", function (e) {
               if (window.scrollY <= 1) {
@@ -170,8 +170,8 @@
                   }
               }
               else {
-                  window.scrollBy(0, -getPageHeight() / 2);
-                  window.scrollBy(0, -getPageHeight() / 2);
+                  // 翻页在4.2系统浏览器会闪烁，换老版本chrome30或者uc就不会
+                  window.scrollBy(0, -getPageHeight());
               }
           })
               .on("click", ".next", function (e) {
@@ -185,8 +185,7 @@
                   }
               }
               else {
-                  window.scrollBy(0, getPageHeight() / 2);
-                  window.scrollBy(0, getPageHeight() / 2);
+                  window.scrollBy(0, getPageHeight());
               }
           });
       })
@@ -202,4 +201,4 @@
   }
 
 })();
-//# sourceMappingURL=bundle.78041c.js.map
+//# sourceMappingURL=bundle.dd7612.js.map
