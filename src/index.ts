@@ -43,9 +43,9 @@ function init() {
           } else {
             localStorage.theme = "dark";
           }
-            $(e.target).html(renderTheme());
+          $(e.target).html(renderTheme());
           $("html").attr("data-theme", localStorage.theme);
-      });
+        });
     })
     .fail((er) => {
       console.error(er);
@@ -56,12 +56,12 @@ function init() {
   document.addEventListener("keydown", (e) => {
     if ([25, 39, 40].indexOf(e.keyCode) >= 0) {
       $(".next").trigger("click");
-      $('#reader').addClass('hideButtons')
+      $("#reader").addClass("hideButtons");
       e.preventDefault();
     } else if ([24, 37, 38].indexOf(e.keyCode) >= 0) {
       $(".prev").trigger("click");
       e.preventDefault();
-      $('#reader').addClass('hideButtons')
+      $("#reader").addClass("hideButtons");
     }
   });
 }
@@ -137,6 +137,31 @@ function openChapter(
       isOpening = false;
     });
 }
+
+let pomodoroTimer: any;
+(window as any)["startPomodoro"] = function startPomodoro() {
+  pomodoroTimer && clearTimeout(pomodoroTimer);
+  pomodoroTimer = setTimeout(() => {
+    let breakSecs = 20;
+    let $el = $(
+      `<div id="pomodoroMask">
+      <div class="info">
+        <div class="text">远眺一下吧</div>
+        <div class="time">00:${breakSecs}</div>
+      </div>
+      </div>`
+    ).appendTo($("body"));
+    setInterval(() => {
+      breakSecs -= 1;
+      $el.find(".time").html(`00:${breakSecs < 10 ? "0" : "" + breakSecs}`);
+      if (breakSecs <= 0) {
+        $el.remove();
+        startPomodoro();
+      }
+    }, 1000);
+  }, 1000 * 60 * 20);
+};
+
 function openBook(book: Book) {
   if (isOpening) return;
   isOpening = true;
@@ -153,8 +178,10 @@ function openBook(book: Book) {
   )
     .then((chapters: ChaptersRes, chapter: ChapterContent) => {
       curChapterIndex = book.durChapterIndex;
-      (window as any)['nextChapter'] = () => openChapter(book, chapters.data, curChapterIndex + 1, "next");
-      (window as any)['prevChapter'] = () => openChapter(book, chapters.data, curChapterIndex - 1, "prev")
+      (window as any)["nextChapter"] = () =>
+        openChapter(book, chapters.data, curChapterIndex + 1, "next");
+      (window as any)["prevChapter"] = () =>
+        openChapter(book, chapters.data, curChapterIndex - 1, "prev");
       let ci = chapters.data[curChapterIndex];
       $(`<div id="reader">
       <div class="header">${ci.title}</div>
@@ -167,8 +194,8 @@ function openBook(book: Book) {
       </div>
     </div>`)
         .appendTo($("#root").html(""))
-        .on('click', '.content', e => {
-          $('#reader').removeClass('hideButtons')
+        .on("click", ".content", (e) => {
+          $("#reader").removeClass("hideButtons");
         })
         .on("click", ".prev", (e) => {
           if (window.scrollY <= 1) {
@@ -178,7 +205,7 @@ function openBook(book: Book) {
               openChapter(book, chapters.data, curChapterIndex - 1, "prev");
             }
           } else {
-            // 翻页在4.2系统浏览器会闪烁，换老版本chrome30或者uc就不会
+            // 翻页在4.2系统浏览器会闪烁，换老版本chrome39或者uc国际版11就不会
             window.scrollBy(0, -getPageHeight());
           }
         })
@@ -196,6 +223,7 @@ function openBook(book: Book) {
             window.scrollBy(0, getPageHeight());
           }
         });
+      startPomodoro();
     })
     .always(() => {
       isOpening = false;

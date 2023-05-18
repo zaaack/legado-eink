@@ -23,6 +23,30 @@
    }
  }
 
+#pomodoroMask {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #000;
+  .info {
+    color: #fff;
+    text-align: center;
+    .text {
+      font-size: 30px;
+    }
+    .time {
+      font-size: 40px;
+    }
+  }
+ }
  #reader {
    padding: 10px;
    padding-bottom: 50px;

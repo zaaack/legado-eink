@@ -14,7 +14,7 @@
       return css;
   }
 
-  ___$insertStyle("body {\n  margin: 0;\n  padding: 0;\n  font-size: 20px;\n}\n\n.home {\n  padding: 20px 0;\n}\n\n.books {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n}\n.books li {\n  padding: 10px;\n  font-size: 25px;\n  border-bottom: 1px solid #aaa;\n}\n\n#reader {\n  padding: 10px;\n  padding-bottom: 50px;\n  padding-top: 30px;\n}\n#reader.hideButtons {\n  padding-bottom: 10px;\n}\n#reader.hideButtons .buttons {\n  display: none;\n}\n#reader .header {\n  position: fixed;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 30px;\n  line-height: 30px;\n  font-size: 14px;\n  color: #999;\n  background-color: #fff;\n}\nhtml[data-theme=dark] #reader .header {\n  color: #ccc;\n  background-color: #000;\n}\n\nhtml[data-theme=dark] #reader {\n  background-color: #000;\n  color: #fff;\n}\n\n#reader .title {\n  font-size: 40px;\n  font-weight: bold;\n}\n#reader .content {\n  font-size: 35px;\n  white-space: pre-line;\n  line-height: 1.5;\n}\n#reader .buttons {\n  height: 40px;\n  line-height: 40px;\n  width: 100%;\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  background-color: #fff;\n  overflow: hidden;\n}\nhtml[data-theme=dark] #reader .buttons {\n  background-color: #000;\n}\n\n#reader .buttons div {\n  width: 33%;\n  float: left;\n  text-align: center;\n  border: 1px solid #000;\n}\nhtml[data-theme=dark] #reader .buttons div {\n  border-color: #fff;\n}");
+  ___$insertStyle("body {\n  margin: 0;\n  padding: 0;\n  font-size: 20px;\n}\n\n.home {\n  padding: 20px 0;\n}\n\n.books {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n}\n.books li {\n  padding: 10px;\n  font-size: 25px;\n  border-bottom: 1px solid #aaa;\n}\n\n#pomodoroMask {\n  display: -webkit-flex;\n  display: flex;\n  -webkit-align-items: center;\n  align-items: center;\n  -webkit-justify-content: center;\n  justify-content: center;\n  position: fixed;\n  left: 0;\n  top: 0;\n  height: 100%;\n  width: 100%;\n  background-color: #000;\n}\n#pomodoroMask .info {\n  color: #fff;\n  text-align: center;\n}\n#pomodoroMask .info .text {\n  font-size: 30px;\n}\n#pomodoroMask .info .time {\n  font-size: 40px;\n}\n\n#reader {\n  padding: 10px;\n  padding-bottom: 50px;\n  padding-top: 30px;\n}\n#reader.hideButtons {\n  padding-bottom: 10px;\n}\n#reader.hideButtons .buttons {\n  display: none;\n}\n#reader .header {\n  position: fixed;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 30px;\n  line-height: 30px;\n  font-size: 14px;\n  color: #999;\n  background-color: #fff;\n}\nhtml[data-theme=dark] #reader .header {\n  color: #ccc;\n  background-color: #000;\n}\n\nhtml[data-theme=dark] #reader {\n  background-color: #000;\n  color: #fff;\n}\n\n#reader .title {\n  font-size: 40px;\n  font-weight: bold;\n}\n#reader .content {\n  font-size: 35px;\n  white-space: pre-line;\n  line-height: 1.5;\n}\n#reader .buttons {\n  height: 40px;\n  line-height: 40px;\n  width: 100%;\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  background-color: #fff;\n  overflow: hidden;\n}\nhtml[data-theme=dark] #reader .buttons {\n  background-color: #000;\n}\n\n#reader .buttons div {\n  width: 33%;\n  float: left;\n  text-align: center;\n  border: 1px solid #000;\n}\nhtml[data-theme=dark] #reader .buttons div {\n  border-color: #fff;\n}");
 
   var base = localStorage.baseUrl || "http://192.168.31.246:1122";
   function init() {
@@ -63,13 +63,13 @@
       document.addEventListener("keydown", function (e) {
           if ([25, 39, 40].indexOf(e.keyCode) >= 0) {
               $(".next").trigger("click");
-              $('#reader').addClass('hideButtons');
+              $("#reader").addClass("hideButtons");
               e.preventDefault();
           }
           else if ([24, 37, 38].indexOf(e.keyCode) >= 0) {
               $(".prev").trigger("click");
               e.preventDefault();
-              $('#reader').addClass('hideButtons');
+              $("#reader").addClass("hideButtons");
           }
       });
   }
@@ -139,6 +139,22 @@
           isOpening = false;
       });
   }
+  var pomodoroTimer;
+  window["startPomodoro"] = function startPomodoro() {
+      pomodoroTimer && clearTimeout(pomodoroTimer);
+      pomodoroTimer = setTimeout(function () {
+          var breakSecs = 20;
+          var $el = $("<div id=\"pomodoroMask\">\n      <div class=\"info\">\n        <div class=\"text\">\u8FDC\u773A\u4E00\u4E0B\u5427</div>\n        <div class=\"time\">00:".concat(breakSecs, "</div>\n      </div>\n      </div>")).appendTo($("body"));
+          setInterval(function () {
+              breakSecs -= 1;
+              $el.find(".time").html("00:".concat(breakSecs < 10 ? "0" : "" + breakSecs));
+              if (breakSecs <= 0) {
+                  $el.remove();
+                  startPomodoro();
+              }
+          }, 1000);
+      }, 1000 * 60 * 20);
+  };
   function openBook(book) {
       if (isOpening)
           return;
@@ -152,13 +168,17 @@
       }))
           .then(function (chapters, chapter) {
           curChapterIndex = book.durChapterIndex;
-          window['nextChapter'] = function () { return openChapter(book, chapters.data, curChapterIndex + 1, "next"); };
-          window['prevChapter'] = function () { return openChapter(book, chapters.data, curChapterIndex - 1, "prev"); };
+          window["nextChapter"] = function () {
+              return openChapter(book, chapters.data, curChapterIndex + 1, "next");
+          };
+          window["prevChapter"] = function () {
+              return openChapter(book, chapters.data, curChapterIndex - 1, "prev");
+          };
           var ci = chapters.data[curChapterIndex];
           $("<div id=\"reader\">\n      <div class=\"header\">".concat(ci.title, "</div>\n      <div class=\"title\">").concat(ci.title, "</div>\n      <div class=\"content\">").concat(chapter.data, "</div>\n      <div class=\"buttons\">\n        <div class=\"prev\">\u4E0A\u4E00\u9875</div>\n        <div class=\"cat\">\u76EE\u5F55</div>\n        <div class=\"next\"=>\u4E0B\u4E00\u9875</div>\n      </div>\n    </div>"))
               .appendTo($("#root").html(""))
-              .on('click', '.content', function (e) {
-              $('#reader').removeClass('hideButtons');
+              .on("click", ".content", function (e) {
+              $("#reader").removeClass("hideButtons");
           })
               .on("click", ".prev", function (e) {
               if (window.scrollY <= 1) {
@@ -170,7 +190,7 @@
                   }
               }
               else {
-                  // 翻页在4.2系统浏览器会闪烁，换老版本chrome30或者uc就不会
+                  // 翻页在4.2系统浏览器会闪烁，换老版本chrome39或者uc国际版11就不会
                   window.scrollBy(0, -getPageHeight());
               }
           })
@@ -188,6 +208,7 @@
                   window.scrollBy(0, getPageHeight());
               }
           });
+          startPomodoro();
       })
           .always(function () {
           isOpening = false;
@@ -201,4 +222,4 @@
   }
 
 })();
-//# sourceMappingURL=bundle.dd7612.js.map
+//# sourceMappingURL=bundle.8be87f.js.map
